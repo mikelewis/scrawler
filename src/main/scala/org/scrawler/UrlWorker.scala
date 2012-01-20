@@ -1,14 +1,10 @@
 package org.scrawler
 import akka.actor.Actor
 import akka.actor.PoisonPill
-
-
-sealed trait WorkType
-case class StartCrawl(url: String) extends WorkType
-case class ProcessUrl(url: String) extends WorkType
-case class DoneUrl(url: String, urls: List[String]) extends WorkType
+import scala.util.Random
 
 class UrlWorker extends Actor {
+  val randomGenerator = Random
  def receive = {
    case ProcessUrl(url) =>
      // something
@@ -16,6 +12,7 @@ class UrlWorker extends Actor {
  } 
  
  def fetchHtml(url: String) {
-   self.reply(DoneUrl(url, List("Poop", "poop 1")))
+   self.reply(DoneUrl(url, List("elem 1" + randomGenerator.nextInt.toString, 
+       "elem 2" + randomGenerator.nextInt.toString)))
  }
 }

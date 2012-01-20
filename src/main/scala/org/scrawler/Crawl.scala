@@ -17,7 +17,7 @@ class Crawl(url: String, maxDepth: Int, useSubdomain: Boolean) {
     val future = processor.? (StartCrawl(url))( timeout = 300 seconds)
     
    future.get match {
-      case urls : List[String] => println("Finished! Got urls" + urls)
+      case urls : List[String] => println("Finished! Got " + urls.size + " urls\n\n\n\n\n" + urls)
       case _ => println("Something went wrong")
     }
     

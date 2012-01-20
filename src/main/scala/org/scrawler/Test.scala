@@ -1,5 +1,5 @@
 package org.scrawler
 
 object Test extends App {
-  Crawl("http://google.com", maxDepth = 3)
+	Crawl("http://google.com", maxDepth = 5)
 }

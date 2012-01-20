@@ -10,7 +10,8 @@ import akka.actor.UntypedChannel
 class Processor(maxDepth: Int, useSubdomain: Boolean) extends Actor {
   val currentlyProcessing = HashMap[String, ActorRef]()
   var queuedUrls = List[String]()
-  var depthsProcessed = 0
+  var urlsProccessed = List[String]()
+  var depthsProcessed = -1
   var originalRequestor: UntypedChannel = _
   
   
@@ -20,16 +21,15 @@ class Processor(maxDepth: Int, useSubdomain: Boolean) extends Actor {
       originalRequestor = self.channel
       processQueuedUrls
     case DoneUrl(startingUrl, newUrls) => 
-      println("Finished" + startingUrl)
-      self.reply(PoisonPill)
+      urlsProccessed = startingUrl :: urlsProccessed
       currentlyProcessing -= startingUrl
+      enqueueNewUrls(newUrls)
       if(finishedWithCurrentDepth){
         depthsProcessed += 1
         if(!isFinished){
-          enqueueNewUrls(newUrls)
           processQueuedUrls
         } else {
-          originalRequestor ! List("Poop - Done")
+          originalRequestor ! urlsProccessed
         }
       }     
   }
