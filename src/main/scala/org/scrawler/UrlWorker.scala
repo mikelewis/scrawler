@@ -22,13 +22,6 @@ import org.jsoup.nodes.Document
 
 import collection.JavaConversions._
 
-/*
- * Filter out sites that don't meet header check: 
- * http://dispatch.databinder.net/Two+Handlers+Are+Better+Than+One.html
- * I.E. Content-Type, Size etc.
- * Also, some sites don't specify the size, so need a stream to automatically
- * calculate it.
- */
 
 class UrlWorker extends Actor {
   val client = new AsyncHttpClient(generateAsyncBuilder)
@@ -49,8 +42,23 @@ class UrlWorker extends Actor {
  }
 
  def fetchHtml(urlStr: String) : Either[Document, FailedDocument] = {
-   
-    val httpHandler = new AsyncHandler[Response]() {
+    val response = client.prepareGet(urlStr).execute(generateHttpHandler).get()
+    
+    Left(Jsoup.parse(response.getResponseBodyAsStream(), null, response.getUri.toString()))
+ }
+ 
+ def generateAsyncBuilder = {
+    val builder = new AsyncHttpClientConfig.Builder()
+    builder.setCompressionEnabled(true)
+        .setAllowPoolingConnection(true)
+        .setMaximumNumberOfRedirects(5)
+        .setRequestTimeoutInMs(30000)
+        .setFollowRedirects(true)
+        .build()
+ }
+ 
+ def generateHttpHandler = {
+   new AsyncHandler[Response]() {
           val builder =
             new Response.ResponseBuilder()
 
@@ -65,10 +73,6 @@ class UrlWorker extends Actor {
 
           def onStatusReceived(responseStatus: HttpResponseStatus) = {
             EventHandler.info(this, "Status: %s".format(responseStatus.getStatusCode()))
-            if(responseStatus.getStatusCode != 200) {
-              println(urlStr)
-            }
-
             builder.accumulate(responseStatus)
             STATE.CONTINUE
           }
@@ -81,20 +85,5 @@ class UrlWorker extends Actor {
             builder.build()
           }
         }
-    
-
-    val response = client.prepareGet(urlStr).execute(httpHandler).get()
-    
-    Left(Jsoup.parse(response.getResponseBodyAsStream(), null, response.getUri.toString()))
- }
- 
- def generateAsyncBuilder = {
-    val builder = new AsyncHttpClientConfig.Builder()
-    builder.setCompressionEnabled(true)
-        .setAllowPoolingConnection(true)
-        .setMaximumNumberOfRedirects(5)
-        .setRequestTimeoutInMs(30000)
-        .setFollowRedirects(true)
-        .build()
  }
 }
