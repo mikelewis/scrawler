@@ -5,12 +5,20 @@ import akka.actor.Actor.actorOf
 import scala.collection.mutable.HashMap
 import akka.actor.PoisonPill
 import akka.actor.UntypedChannel
+import akka.routing.Routing.Broadcast
+import akka.routing.CyclicIterator
+import akka.routing.Routing
+import akka.config.Supervision.OneForOneStrategy
+import akka.config.Supervision.Permanent
+import akka.dispatch.Dispatchers
 
 
 
 class Processor(maxDepth: Int, useSubdomain: Boolean) extends Actor {
+   self.faultHandler = OneForOneStrategy(List(classOf[Throwable]), 5, 5000)
+
   // Master list of urls currently being processed.
-  val currentlyProcessing = HashMap[String, ActorRef]()
+  val currentlyProcessing = scala.collection.mutable.Set[String]()
   // Urls that are queued for the next depth
   val queuedUrls = emptyQueue
   // Keep track of urls we've processed.
@@ -18,6 +26,18 @@ class Processor(maxDepth: Int, useSubdomain: Boolean) extends Actor {
   var depthsProcessed = -1 // Keep track of the depth as we are do a BFS(Breadth First Search)
   var originalRequestor: UntypedChannel = _ // Know where to send results back to
   
+  // Arbitrary number for now
+  val urlWorkers = Vector.fill(10)(actorOf[UrlWorker])
+  val workerRouter = Routing.loadBalancerActor(CyclicIterator(urlWorkers)).start()
+  
+  override def preStart = urlWorkers foreach { self.startLink(_) }
+  override def postStop() {
+      urlWorkers.foreach(self.unlink(_))
+
+      workerRouter ! Broadcast(PoisonPill)
+
+      workerRouter ! PoisonPill
+   }
   
   def receive = {
     case StartCrawl(url) =>
@@ -69,8 +89,9 @@ class Processor(maxDepth: Int, useSubdomain: Boolean) extends Actor {
   def processQueuedUrls {
     queuedUrls.dequeueAll( e=> true ).foreach{ url => 
       	val actor = actorOf[UrlWorker]
-      	currentlyProcessing += (url -> actor.start())
-      	actor ! ProcessUrl(url)
+      	currentlyProcessing += url
+      	
+      	workerRouter ! ProcessUrl(url)
     }
     queuedUrls.clear
   }
