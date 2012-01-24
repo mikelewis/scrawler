@@ -7,6 +7,7 @@ import akka.actor.PoisonPill
 import akka.actor.UntypedChannel
 
 
+
 class Processor(maxDepth: Int, useSubdomain: Boolean) extends Actor {
   // Master list of urls currently being processed.
   val currentlyProcessing = HashMap[String, ActorRef]()
@@ -23,18 +24,38 @@ class Processor(maxDepth: Int, useSubdomain: Boolean) extends Actor {
       enqueueNewUrls(List(url))
       originalRequestor = self.channel
       processQueuedUrls
-    case DoneUrl(startingUrl, newUrls) => 
+      
+    case DoneUrl(startingUrl, finalDocument) => 
       urlsProcessed += startingUrl
       currentlyProcessing -= startingUrl
-      enqueueNewUrls(newUrls)
-      if(finishedWithCurrentDepth){
-        depthsProcessed += 1
-        if(!isFinished){
-          processQueuedUrls
-        } else {
-          originalRequestor ! urlsProcessed.toList
-        }
-      }     
+      handleDoneUrl(finalDocument)
+  }
+  
+  def handleDoneUrl(finalDocument: FinalDocument) {
+    finalDocument match {
+      case parsedDoc: ParsedDocument => handleParsedDocument(parsedDoc)
+      case failedDoc: FailedDocument => handleFailedDocument(failedDoc)
+    }
+    
+    if(finishedWithCurrentDepth){
+      depthsProcessed += 1
+      println("Depths processed" + depthsProcessed)
+      if(!isFinished){
+        processQueuedUrls
+       } else {
+         originalRequestor ! urlsProcessed.toList
+       }
+     }
+  }
+  
+  def handleParsedDocument(parsedDocument: ParsedDocument){
+    println("Got " + parsedDocument.urls.size + " urls to process" )
+    println("Number to go " + currentlyProcessing.size)
+    enqueueNewUrls(parsedDocument.urls)
+  }
+  
+  def handleFailedDocument(failedDocument: FailedDocument){
+    // pass to some callback with failures?
   }
   
    def isFinished: Boolean = {
@@ -60,12 +81,11 @@ class Processor(maxDepth: Int, useSubdomain: Boolean) extends Actor {
     	  queuedUrls += url
     	}
     }
-    queuedUrls ++= urls
   }
   
   def visit(url: String) : Boolean = {
     // also make sure it's on the same host etc etc.
-    urlsProcessed(url)
+    !urlsProcessed(url)
   }
   
   def emptyQueue = {
