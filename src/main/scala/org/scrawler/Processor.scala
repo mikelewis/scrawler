@@ -76,6 +76,10 @@ class Processor(maxDepth: Int, useSubdomain: Boolean) extends Actor {
   
   def handleFailedDocument(failedDocument: FailedDocument){
     // pass to some callback with failures?
+    failedDocument match {
+      case SystemError(e) => println("Exception!!" + e); e.printStackTrace()
+      case x => println("Something else" + x)
+    }
   }
   
    def isFinished: Boolean = {

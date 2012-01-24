@@ -39,7 +39,11 @@ class UrlWorker extends Actor {
  }
  
  def processUrl(url: String) : WorkType = {
-   val jsoupDocument = fetchHtml(url)
+   val jsoupDocument = try {
+	  fetchHtml(url)
+   } catch {
+     case e : Exception => new Right(SystemError(e))
+   }
    val finalDoc = jsoupDocument.fold((doc => new ParsedDocument(doc)), (failedDocument => failedDocument))
    DoneUrl(url, finalDoc)
  }
