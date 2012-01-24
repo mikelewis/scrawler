@@ -31,6 +31,8 @@ import collection.JavaConversions._
  */
 
 class UrlWorker extends Actor {
+  val client = new AsyncHttpClient(generateAsyncBuilder)
+      
  def receive = {
    case ProcessUrl(url) =>	
      self.reply(processUrl(url))
@@ -71,7 +73,7 @@ class UrlWorker extends Actor {
           }
         }
     
-    val client = new AsyncHttpClient(generateAsyncBuilder)
+
     val response = client.prepareGet(urlStr).execute(httpHandler).get()
     
     Left(Jsoup.parse(response.getResponseBodyAsStream(), null, urlStr))
