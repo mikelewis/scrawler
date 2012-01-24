@@ -60,6 +60,11 @@ class UrlWorker extends Actor {
           }
 
           def onStatusReceived(responseStatus: HttpResponseStatus) = {
+            EventHandler.info(this, "Status: %s".format(responseStatus.getStatusCode()))
+            if(responseStatus.getStatusCode != 200) {
+              println(urlStr)
+            }
+
             builder.accumulate(responseStatus)
             STATE.CONTINUE
           }
@@ -76,7 +81,7 @@ class UrlWorker extends Actor {
 
     val response = client.prepareGet(urlStr).execute(httpHandler).get()
     
-    Left(Jsoup.parse(response.getResponseBodyAsStream(), null, urlStr))
+    Left(Jsoup.parse(response.getResponseBodyAsStream(), null, response.getUri.toString()))
  }
  
  def generateAsyncBuilder = {
