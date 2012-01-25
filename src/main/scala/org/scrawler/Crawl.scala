@@ -2,10 +2,14 @@ package org.scrawler
 import akka.actor.Actor.actorOf
 import akka.util.duration._
 
+/*
+ * TODO: Use CrawlConfig (and merge in hosts if they call Crawl.site/ Craw.host)
+ */
 object Crawl {
   def apply(url: String, maxDepth: Int = 0, useSubdomain: Boolean = false) = {
     (new Crawl(url, maxDepth, useSubdomain)).start()
   }
+  
 }
 
 class Crawl(url: String, maxDepth: Int, useSubdomain: Boolean) {
