@@ -12,10 +12,8 @@ import akka.config.Supervision.OneForOneStrategy
 import akka.config.Supervision.Permanent
 import akka.dispatch.Dispatchers
 
-
-
 class Processor(maxDepth: Int, useSubdomain: Boolean) extends Actor {
-   self.faultHandler = OneForOneStrategy(List(classOf[Throwable]), 5, 5000)
+  self.faultHandler = OneForOneStrategy(List(classOf[Throwable]), 5, 5000)
 
   // Master list of urls currently being processed.
   val currentlyProcessing = scala.collection.mutable.Set[String]()
@@ -25,96 +23,97 @@ class Processor(maxDepth: Int, useSubdomain: Boolean) extends Actor {
   val urlsProcessed = scala.collection.mutable.Set[String]()
   var depthsProcessed = -1 // Keep track of the depth as we are do a BFS(Breadth First Search)
   var originalRequestor: UntypedChannel = _ // Know where to send results back to
-  
+
   // Arbitrary number for now
   val urlWorkers = Vector.fill(10)(actorOf[UrlWorker])
   val workerRouter = Routing.loadBalancerActor(CyclicIterator(urlWorkers)).start()
-  
+
   override def preStart = urlWorkers foreach { self.startLink(_) }
   override def postStop() {
-      urlWorkers.foreach(self.unlink(_))
+    urlWorkers.foreach(self.unlink(_))
 
-      workerRouter ! Broadcast(PoisonPill)
+    workerRouter ! Broadcast(PoisonPill)
 
-      workerRouter ! PoisonPill
-   }
-  
+    workerRouter ! PoisonPill
+  }
+
   def receive = {
     case StartCrawl(url) =>
       enqueueNewUrls(List(url))
       originalRequestor = self.channel
       processQueuedUrls
-      
-    case DoneUrl(startingUrl, finalDocument) => 
+
+    case DoneUrl(startingUrl, finalDocument) =>
       urlsProcessed += startingUrl
       currentlyProcessing -= startingUrl
       handleDoneUrl(finalDocument)
   }
-  
+
   def handleDoneUrl(finalDocument: FinalDocument) {
     finalDocument match {
       case parsedDoc: ParsedDocument => handleParsedDocument(parsedDoc)
       case failedDoc: FailedDocument => handleFailedDocument(failedDoc)
     }
-    
-    if(finishedWithCurrentDepth){
+
+    if (finishedWithCurrentDepth) {
       depthsProcessed += 1
       println("Depths processed" + depthsProcessed)
-      if(!isFinished){
+      if (!isFinished) {
         processQueuedUrls
-       } else {
-         originalRequestor ! urlsProcessed.toList
-       }
-     }
+      } else {
+        originalRequestor ! urlsProcessed.toList
+      }
+    }
   }
-  
-  def handleParsedDocument(parsedDocument: ParsedDocument){
-    println("Got " + parsedDocument.urls.size + " urls to process" )
+
+  def handleParsedDocument(parsedDocument: ParsedDocument) {
+    println("Got " + parsedDocument.urls.size + " urls to process")
     println("Number to go " + currentlyProcessing.size)
     enqueueNewUrls(parsedDocument.urls)
   }
-  
-  def handleFailedDocument(failedDocument: FailedDocument){
+
+  def handleFailedDocument(failedDocument: FailedDocument) {
     // pass to some callback with failures?
     failedDocument match {
       case SystemError(e) => println("Exception!!" + e); e.printStackTrace()
       case x => println("Something else" + x)
     }
   }
-  
-   def isFinished: Boolean = {
-	  queuedUrls.size == 0 || depthsProcessed == maxDepth
-   }
-   
-   def finishedWithCurrentDepth: Boolean = {
-     currentlyProcessing.size == 0
-   }
-  
+
+  def isFinished: Boolean = {
+    queuedUrls.size == 0 || depthsProcessed == maxDepth
+  }
+
+  def finishedWithCurrentDepth: Boolean = {
+    currentlyProcessing.size == 0
+  }
+
   def processQueuedUrls {
-    queuedUrls.dequeueAll( e=> true ).foreach{ url => 
-      	val actor = actorOf[UrlWorker]
-      	currentlyProcessing += url
-      	
-      	workerRouter ! ProcessUrl(url)
+    queuedUrls.dequeueAll(e => true).foreach { url =>
+      val actor = actorOf[UrlWorker]
+      currentlyProcessing += url
+
+      workerRouter ! ProcessUrl(url)
     }
     queuedUrls.clear
   }
-  
-  def enqueueNewUrls(urls: List[String])  {
-    urls.foreach{ url =>
-    	if(!queuedUrls.contains(url) && visit(url)){
-    	  queuedUrls += url
-    	}
+
+  def enqueueNewUrls(urls: List[String]) {
+    urls.foreach { url =>
+      if (!queuedUrls.contains(url) && visit(url)) {
+        queuedUrls += url
+      }
     }
   }
-  
-  def visit(url: String) : Boolean = {
+
+  def visit(url: String): Boolean = {
     // also make sure it's on the same host etc etc.
-    !urlsProcessed(url)
+    UrlUtils.isValidUrl(url) &&
+      !urlsProcessed(url)
   }
-  
+
   def emptyQueue = {
     scala.collection.mutable.Queue[String]()
   }
-  
+
 }
