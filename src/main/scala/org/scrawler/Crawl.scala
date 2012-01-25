@@ -4,6 +4,7 @@ import akka.util.duration._
 
 /*
  * TODO: Use CrawlConfig (and merge in hosts if they call Crawl.site/ Craw.host)
+ * merge being passedInConfig.copy(hosts = ...)
  */
 object Crawl {
   def apply(url: String, maxDepth: Int = 0, useSubdomain: Boolean = false) = {
