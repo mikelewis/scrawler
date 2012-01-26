@@ -7,14 +7,14 @@ import akka.util.duration._
  * merge being passedInConfig.copy(hosts = ...)
  */
 object Crawl {
-  def apply(url: String, maxDepth: Int = 0, useSubdomain: Boolean = false) = {
-    (new Crawl(url, maxDepth, useSubdomain)).start()
+  def apply(url: String, crawlConfig: CrawlConfig = CrawlConfig()) = {
+    (new Crawl(url, crawlConfig)).start()
   }
-  
+
 }
 
-class Crawl(url: String, maxDepth: Int, useSubdomain: Boolean) {
-  val processor = actorOf(new Processor(maxDepth, useSubdomain)).start()
+class Crawl(url: String, crawlConfig: CrawlConfig) {
+  val processor = actorOf(new Processor(crawlConfig)).start()
 
   def start(): List[String] = {
     val future = processor.?(StartCrawl(url))(timeout = 300 seconds)

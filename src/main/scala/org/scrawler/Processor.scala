@@ -12,9 +12,10 @@ import akka.config.Supervision.OneForOneStrategy
 import akka.config.Supervision.Permanent
 import akka.dispatch.Dispatchers
 
-class Processor(maxDepth: Int, useSubdomain: Boolean) extends Actor {
+class Processor(crawlConfig: CrawlConfig) extends Actor {
   self.faultHandler = OneForOneStrategy(List(classOf[Throwable]), 5, 5000)
 
+  val maxDepth = crawlConfig.maxDepth
   // Master list of urls currently being processed.
   val currentlyProcessing = scala.collection.mutable.Set[String]()
   // Urls that are queued for the next depth
@@ -25,7 +26,7 @@ class Processor(maxDepth: Int, useSubdomain: Boolean) extends Actor {
   var originalRequestor: UntypedChannel = _ // Know where to send results back to
 
   // Arbitrary number for now
-  val urlWorkers = Vector.fill(10)(actorOf[UrlWorker])
+  val urlWorkers = Vector.fill(crawlConfig.numberOfUrlWorkers)(actorOf(new UrlWorker(crawlConfig)))
   val workerRouter = Routing.loadBalancerActor(CyclicIterator(urlWorkers)).start()
 
   override def preStart = urlWorkers foreach { self.startLink(_) }
@@ -90,7 +91,6 @@ class Processor(maxDepth: Int, useSubdomain: Boolean) extends Actor {
 
   def processQueuedUrls {
     queuedUrls.dequeueAll(e => true).foreach { url =>
-      val actor = actorOf[UrlWorker]
       currentlyProcessing += url
 
       workerRouter ! ProcessUrl(url)

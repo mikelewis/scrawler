@@ -19,8 +19,8 @@ import org.jsoup.nodes.Document
 
 import collection.JavaConversions._
 
-class UrlWorker extends Actor {
-  val client = new AsyncHttpClient(generateAsyncBuilder)
+class UrlWorker(crawlConfig: CrawlConfig) extends Actor {
+  val client = new AsyncHttpClient(crawlConfig.httpClientConfig)
 
   def receive = {
     case ProcessUrl(url) =>
@@ -41,16 +41,6 @@ class UrlWorker extends Actor {
     val response = client.prepareGet(urlStr).execute(generateHttpHandler).get()
 
     Left(Jsoup.parse(response.getResponseBodyAsStream(), null, response.getUri.toString()))
-  }
-
-  def generateAsyncBuilder = {
-    val builder = new AsyncHttpClientConfig.Builder()
-    builder.setCompressionEnabled(true)
-      .setAllowPoolingConnection(true)
-      .setMaximumNumberOfRedirects(5)
-      .setRequestTimeoutInMs(30000)
-      .setFollowRedirects(true)
-      .build()
   }
 
   def generateHttpHandler = {
