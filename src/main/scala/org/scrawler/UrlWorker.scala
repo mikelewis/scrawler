@@ -52,7 +52,7 @@ class UrlWorker(crawlConfig: CrawlConfig) extends Actor {
         new Response.ResponseBuilder()
 
       def onThrowable(t: Throwable) {
-        Logger.error(t.getMessage)
+        Logger.error(this, t.getMessage)
       }
 
       def onBodyPartReceived(bodyPart: HttpResponseBodyPart) = {
@@ -61,7 +61,7 @@ class UrlWorker(crawlConfig: CrawlConfig) extends Actor {
       }
 
       def onStatusReceived(responseStatus: HttpResponseStatus) = {
-        Logger.info("Status: %s".format(responseStatus.getStatusCode()))
+        Logger.info(this, "Status: %s".format(responseStatus.getStatusCode()))
         builder.accumulate(responseStatus)
         STATE.CONTINUE
       }

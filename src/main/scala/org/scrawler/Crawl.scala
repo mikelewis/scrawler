@@ -1,6 +1,7 @@
 package org.scrawler
 import akka.actor.Actor.actorOf
 import akka.util.duration._
+import scala.util.matching.Regex
 
 /*
  * TODO: Use CrawlConfig (and merge in hosts if they call Crawl.site/ Craw.host)
@@ -11,6 +12,17 @@ object Crawl {
     (new Crawl(url, crawlConfig)).start()
   }
 
+  def host(hostStr: String, secure: Boolean, crawlConfig: CrawlConfig = CrawlConfig()) = {
+    val newConfig = crawlConfig.copy(hosts = (crawlConfig.hosts ++ List(hostStr.r)))
+    val scheme = if (secure) "https://" else "http://"
+    (new Crawl(scheme + hostStr, newConfig)).start()
+  }
+
+  def site(url: String, crawlConfig: CrawlConfig = CrawlConfig()) = {
+    val host = new java.net.URI(url).getHost
+    val newConfig = crawlConfig.copy(hosts = (crawlConfig.hosts ++ List(host.r)))
+    (new Crawl(url, newConfig)).start()
+  }
 }
 
 class Crawl(url: String, crawlConfig: CrawlConfig) {

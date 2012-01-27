@@ -1,6 +1,8 @@
 package org.scrawler
 import com.ning.http.client.AsyncHttpClientConfig
 import com.ning.http.client.AsyncHttpClientConfig.Builder
+import scala.util.matching.Regex
+
 
 object GeneralUtils {
   def defaultAsyncHttpConfig = {
@@ -11,5 +13,12 @@ object GeneralUtils {
       .setRequestTimeoutInMs(30000)
       .setFollowRedirects(true)
       .build()
+  }
+  
+  
+  def genericRegexMatch(regexes : Traversable[Regex], str : String) = {
+    regexes.exists {regex => 
+    	regex.findFirstIn(str).isDefined
+    }
   }
 }

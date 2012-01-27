@@ -4,20 +4,20 @@ import akka.actor.Actor.actorOf
 import akka.actor.PoisonPill
 
 sealed trait LoggingTypes
-case class Info(msg: String) extends LoggingTypes
-case class Warn(msg: String) extends LoggingTypes
-case class Error(msg: String) extends LoggingTypes
+case class Info(sender: Any, msg: String) extends LoggingTypes
+case class Warn(sender: Any, msg: String) extends LoggingTypes
+case class Error(sender: Any, msg: String) extends LoggingTypes
 
 class LoggerActor extends Actor {
   def receive = {
-    case Info(str) => message("INFO", str)
-    case Warn(str) => message("WARN", str)
-    case Error(str) => message("ERROR", str)
+    case Info(from, str) => message("INFO", from, str)
+    case Warn(from, str) => message("WARN", from, str)
+    case Error(from, str) => message("ERROR", from, str)
   }
 
-  private def message(typeOfMessage: String, str: String) {
+  private def message(typeOfMessage: String, from : Any, str: String) {
     val finalStr = "%s\t[%s] [%s] - %s".
-      format(typeOfMessage, (new java.util.Date), self.channel, str)
+      format(typeOfMessage, (new java.util.Date), from, str)
 
     println(finalStr)
   }
@@ -29,28 +29,28 @@ object Logger {
   def emptyLogger = {
     actorOf[LoggerActor].start()
   }
-  
-  def info(str: String) {
-    sendMessage(Info(str))
+
+  def info(from : Any, str: String) {
+    sendMessage(Info(from, str))
   }
 
-  def warn(str: String) {
-    sendMessage(Warn(str))
+  def warn(from : Any, str: String) {
+    sendMessage(Warn(from, str))
   }
 
-  def error(str: String) {
-    sendMessage(Error(str))
+  def error(from : Any, str: String) {
+    sendMessage(Error(from, str))
   }
 
   def shutdownLogger {
     loggerActor.stop
   }
-  
-  private def sendMessage(msg : LoggingTypes) {
-    if(loggerActor.isShutdown){
+
+  private def sendMessage(msg: LoggingTypes) {
+    if (loggerActor.isShutdown) {
       loggerActor = emptyLogger
     }
-    
+
     loggerActor ! msg
   }
 }

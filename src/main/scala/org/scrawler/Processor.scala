@@ -11,8 +11,9 @@ import akka.routing.Routing
 import akka.config.Supervision.OneForOneStrategy
 import akka.config.Supervision.Permanent
 import akka.dispatch.Dispatchers
+import java.net.URI
 
-class Processor(crawlConfig: CrawlConfig) extends Actor {
+class Processor(val crawlConfig: CrawlConfig) extends Actor with Filters {
   self.faultHandler = OneForOneStrategy(List(classOf[Throwable]), 5, 5000)
 
   val maxDepth = crawlConfig.maxDepth
@@ -42,7 +43,7 @@ class Processor(crawlConfig: CrawlConfig) extends Actor {
     case StartCrawl(url) =>
       enqueueNewUrls(List(url))
       originalRequestor = self.channel
-      processQueuedUrls
+      processQueuedUrlsOrFinish
 
     case DoneUrl(startingUrl, finalDocument) =>
       urlsProcessed += startingUrl
@@ -59,11 +60,15 @@ class Processor(crawlConfig: CrawlConfig) extends Actor {
     if (finishedWithCurrentDepth) {
       depthsProcessed += 1
       println("Depths processed" + depthsProcessed)
-      if (!isFinished) {
-        processQueuedUrls
-      } else {
-        originalRequestor ! urlsProcessed.toList
-      }
+      processQueuedUrlsOrFinish
+    }
+  }
+
+  def processQueuedUrlsOrFinish {
+    if (!isFinished) {
+      processQueuedUrls
+    } else {
+      originalRequestor ! urlsProcessed.toList
     }
   }
 
@@ -107,9 +112,13 @@ class Processor(crawlConfig: CrawlConfig) extends Actor {
   }
 
   def visit(url: String): Boolean = {
+    val urlObj: URI = UrlUtils.createURI(url).toRight(None).
+      fold(_ => return false, x => x)
+
     // also make sure it's on the same host etc etc.
-    UrlUtils.isValidUrl(url) &&
-      !urlsProcessed(url)
+    !urlsProcessed(url) &&
+      validHost(urlObj.getHost) &&
+      !invalidUrl(url)
   }
 
   def emptyQueue = {
