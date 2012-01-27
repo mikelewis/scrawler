@@ -10,14 +10,14 @@ case class Error(msg: String) extends LoggingTypes
 
 class LoggerActor extends Actor {
   def receive = {
-    case Info(str) => message("info", str)
-    case Warn(str) => message("warn", str)
-    case Error(str) => message("error", str)
+    case Info(str) => message("INFO", str)
+    case Warn(str) => message("WARN", str)
+    case Error(str) => message("ERROR", str)
   }
 
   private def message(typeOfMessage: String, str: String) {
-    val finalStr = "[%s] [%s] [%s] - %s".
-      format((new java.util.Date), typeOfMessage.capitalize, self.channel, str)
+    val finalStr = "%s\t[%s] [%s] - %s".
+      format(typeOfMessage, (new java.util.Date), self.channel, str)
 
     println(finalStr)
   }
