@@ -12,6 +12,10 @@ object UrlUtils {
    }
   }
   
+  def getHost(uri : URI) = {
+    Option(uri.getHost()).getOrElse(uri.getAuthority())
+  }
+  
   def createURI(url : String) : Option[URI] = {
    try {
     Some(AsyncHttpProviderUtils.createUri(url))

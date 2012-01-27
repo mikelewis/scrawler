@@ -117,7 +117,7 @@ class Processor(val crawlConfig: CrawlConfig) extends Actor with Filters {
 
     // also make sure it's on the same host etc etc.
     !urlsProcessed(url) &&
-      validHost(urlObj.getHost) &&
+      validHost(UrlUtils.getHost(urlObj)) &&
       !invalidUrl(url)
   }
 
