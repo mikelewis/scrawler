@@ -25,6 +25,7 @@ class Crawl(url: String, crawlConfig: CrawlConfig) {
     }
 
     processor.stop
+    Logger.shutdownLogger
     List("saf")
   }
 }

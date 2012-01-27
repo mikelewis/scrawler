@@ -12,7 +12,6 @@ import com.ning.http.client.AsyncHttpClientConfig.Builder
 
 import akka.actor.Actor
 import akka.actor.PoisonPill
-import akka.event.EventHandler
 
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -22,6 +21,10 @@ import collection.JavaConversions._
 class UrlWorker(crawlConfig: CrawlConfig) extends Actor {
   val client = new AsyncHttpClient(crawlConfig.httpClientConfig)
 
+  override def postStop {
+    client.close
+  }
+  
   def receive = {
     case ProcessUrl(url) =>
       self.reply(processUrl(url))
@@ -49,7 +52,7 @@ class UrlWorker(crawlConfig: CrawlConfig) extends Actor {
         new Response.ResponseBuilder()
 
       def onThrowable(t: Throwable) {
-        EventHandler.error(this, t.getMessage)
+        Logger.error(t.getMessage)
       }
 
       def onBodyPartReceived(bodyPart: HttpResponseBodyPart) = {
@@ -58,7 +61,7 @@ class UrlWorker(crawlConfig: CrawlConfig) extends Actor {
       }
 
       def onStatusReceived(responseStatus: HttpResponseStatus) = {
-        EventHandler.info(this, "Status: %s".format(responseStatus.getStatusCode()))
+        Logger.info("Status: %s".format(responseStatus.getStatusCode()))
         builder.accumulate(responseStatus)
         STATE.CONTINUE
       }
