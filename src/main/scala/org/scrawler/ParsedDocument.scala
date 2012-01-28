@@ -2,7 +2,7 @@ package org.scrawler
 import org.jsoup.nodes.Document
 import scala.collection.JavaConversions._
 
-class ParsedDocument(doc: Document) extends FinalDocument {
+class ParsedDocument(val doc: Document) extends FinalDocument {
   // TDODO I'd rather find all these links in one pass...
   val links = doc.select("a[href]").map(_.attr("abs:href"))
   val iframeSrc = doc.select("frame[src]").map(_.attr("abs:src"))
@@ -12,4 +12,5 @@ class ParsedDocument(doc: Document) extends FinalDocument {
   def urls: List[String] = {
     (links ++ iframeSrc ++ linkHref ++ scriptSrc).toList
   }
+  
 }

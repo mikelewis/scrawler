@@ -4,23 +4,30 @@ import java.net.URI
 
 object UrlUtils {
   def isValidUrl(url: String): Boolean = {
-   try {
-    AsyncHttpProviderUtils.createUri(url)
-    true
-   } catch {
-     case e => false
-   }
+    try {
+      AsyncHttpProviderUtils.createUri(url)
+      true
+    } catch {
+      case e => false
+    }
   }
-  
-  def getHost(uri : URI) = {
+
+  def getHost(uri: URI) = {
     Option(uri.getHost()).getOrElse(uri.getAuthority())
   }
-  
-  def createURI(url : String) : Option[URI] = {
-   try {
-    Some(AsyncHttpProviderUtils.createUri(url))
-   } catch {
-     case e => None
-   }
+
+  // assumed to be a valid uri
+  def sanitizeUrl(uri: URI) = {
+    // strip fragments
+    new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(), uri.getPath(),
+      uri.getQuery(), null)
+  }
+
+  def createURI(url: String): Option[URI] = {
+    try {
+      Some(AsyncHttpProviderUtils.createUri(url))
+    } catch {
+      case e => None
+    }
   }
 }

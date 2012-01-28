@@ -105,15 +105,23 @@ class Processor(val crawlConfig: CrawlConfig) extends Actor with Filters {
 
   def enqueueNewUrls(urls: List[String]) {
     urls.foreach { url =>
-      if (!queuedUrls.contains(url) && visit(url)) {
-        queuedUrls += url
+      validateAndSanitizeUrl(url).map { url =>
+        if (!queuedUrls.contains(url) && visit(url)) {
+          queuedUrls += url
+        }
       }
     }
   }
 
+  def validateAndSanitizeUrl(url: String): Option[String] = {
+    UrlUtils.createURI(url).map { uri =>
+      UrlUtils.sanitizeUrl(uri).toString
+    }
+  }
+
+  // Assumed to be a valid url
   def visit(url: String): Boolean = {
-    val urlObj: URI = UrlUtils.createURI(url).toRight(None).
-      fold(_ => return false, x => x)
+    val urlObj: URI = UrlUtils.createURI(url).get
 
     // also make sure it's on the same host etc etc.
     !urlsProcessed(url) &&
