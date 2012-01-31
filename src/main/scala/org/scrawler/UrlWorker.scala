@@ -10,6 +10,8 @@ import com.ning.http.client.Response
 import com.ning.http.client.AsyncHttpClientConfig
 import com.ning.http.client.AsyncHttpClientConfig.Builder
 
+import java.net.ConnectException
+
 import akka.actor.Actor
 import akka.actor.PoisonPill
 
@@ -24,7 +26,7 @@ class UrlWorker(crawlConfig: CrawlConfig) extends Actor {
   override def postStop {
     client.close
   }
-  
+
   def receive = {
     case ProcessUrl(url) =>
       self.reply(processUrl(url))
@@ -34,7 +36,7 @@ class UrlWorker(crawlConfig: CrawlConfig) extends Actor {
     val jsoupDocument = try {
       fetchHtml(url)
     } catch {
-      case e: Exception => new Right(SystemError(e))
+      case e: Exception => new Right(SystemError(url ,e))
     }
     val finalDoc = jsoupDocument.fold((doc => doc), (failedDocument => failedDocument))
     DoneUrl(url, finalDoc)
@@ -42,9 +44,17 @@ class UrlWorker(crawlConfig: CrawlConfig) extends Actor {
 
   // TODO - Based on response, return Right(FailedDocument)
   def fetchHtml(urlStr: String): Either[ParsedDocument, FailedDocument] = {
-    val response = client.prepareGet(urlStr).execute(generateHttpHandler).get()
-    val doc = Jsoup.parse(response.getResponseBodyAsStream(), null, response.getUri.toString())
-    Left(new ParsedDocument(response, doc))
+    try {
+      val response = client.prepareGet(urlStr).execute(generateHttpHandler).get()
+      val doc = Jsoup.parse(response.getResponseBodyAsStream(), null, response.getUri.toString())
+      Left(new ParsedDocument(response, doc))
+    } catch {
+      case x => {
+    	  x.getCause() match {
+    	    case e : java.net.ConnectException => Right(ConnectionError(urlStr, e))
+    	  }
+      }
+    }
   }
 
   def generateHttpHandler = {

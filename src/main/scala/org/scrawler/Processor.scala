@@ -81,7 +81,7 @@ class Processor(val crawlConfig: CrawlConfig) extends Actor with Filters {
   def handleFailedDocument(failedDocument: FailedDocument) {
     // pass to some callback with failures?
     failedDocument match {
-      case SystemError(e) => println("Exception!!" + e); e.printStackTrace()
+      case SystemError(url, e) => println("Exception for " + url + "!!" + e); e.printStackTrace()
       case x => println("Something else" + x)
     }
   }

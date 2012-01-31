@@ -13,6 +13,8 @@ resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/release
 
 libraryDependencies += "se.scalablesolutions.akka" % "akka-actor" % "1.3-RC6"
 
+libraryDependencies += "se.scalablesolutions.akka" % "akka-testkit" % "1.3-RC6"
+
 libraryDependencies ++= Seq(
 	"org.jsoup" % "jsoup" % "1.6.1",
 	"com.ning" % "async-http-client" % "1.6.4" % "compile",
