@@ -10,18 +10,6 @@ class Robots(userAgent: String) {
   val allows = scala.collection.mutable.ListBuffer[Regex]()
 
   def isAllowed(url: String): Boolean = {
-    (allows.exists { rule =>
-      url match {
-        case rule() => true
-        case _ => false
-      }
-    }
-      ||
-      !disallows.exists { rule =>
-        url match {
-          case rule() => true
-          case _ => false
-        }
-      })
+    GeneralUtils.genericRegexMatch(allows, url) || ! GeneralUtils.genericRegexMatch(disallows, url)
   }
 }

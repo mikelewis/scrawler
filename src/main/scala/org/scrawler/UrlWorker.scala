@@ -40,6 +40,7 @@ class UrlWorker(crawlConfig: CrawlConfig) extends Actor {
     DoneUrl(url, finalDoc)
   }
 
+  // TODO - Based on reponse, return Right(FailedDocument)
   def fetchHtml(urlStr: String): Either[Document, FailedDocument] = {
     val response = client.prepareGet(urlStr).execute(generateHttpHandler).get()
 
