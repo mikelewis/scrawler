@@ -36,15 +36,15 @@ class UrlWorker(crawlConfig: CrawlConfig) extends Actor {
     } catch {
       case e: Exception => new Right(SystemError(e))
     }
-    val finalDoc = jsoupDocument.fold((doc => new ParsedDocument(doc)), (failedDocument => failedDocument))
+    val finalDoc = jsoupDocument.fold((doc => doc), (failedDocument => failedDocument))
     DoneUrl(url, finalDoc)
   }
 
-  // TODO - Based on reponse, return Right(FailedDocument)
-  def fetchHtml(urlStr: String): Either[Document, FailedDocument] = {
+  // TODO - Based on response, return Right(FailedDocument)
+  def fetchHtml(urlStr: String): Either[ParsedDocument, FailedDocument] = {
     val response = client.prepareGet(urlStr).execute(generateHttpHandler).get()
-
-    Left(Jsoup.parse(response.getResponseBodyAsStream(), null, response.getUri.toString()))
+    val doc = Jsoup.parse(response.getResponseBodyAsStream(), null, response.getUri.toString())
+    Left(new ParsedDocument(response, doc))
   }
 
   def generateHttpHandler = {
