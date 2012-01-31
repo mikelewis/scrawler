@@ -12,6 +12,7 @@ object UrlUtils {
     }
   }
 
+  // assumes url is correct
   def getHost(uri: URI) = {
     Option(uri.getHost()).getOrElse(uri.getAuthority())
   }

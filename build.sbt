@@ -18,5 +18,6 @@ libraryDependencies ++= Seq(
 	"com.ning" % "async-http-client" % "1.6.4" % "compile",
 	"org.slf4j" % "slf4j-nop" % "1.6.0" % "runtime",
 	"org.specs2" %% "specs2" % "1.7.1" % "test",
-	"junit" % "junit" % "4.7"
+	"junit" % "junit" % "4.7",
+	"org.mockito" % "mockito-all" % "1.8.5"
 )
