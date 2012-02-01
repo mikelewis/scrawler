@@ -15,7 +15,10 @@ import java.net.URI
 
 class Processor(val crawlConfig: CrawlConfig) extends Actor with Filters {
   self.faultHandler = OneForOneStrategy(List(classOf[Throwable]), 5, 5000)
+
   val hooks = crawlConfig.hooks
+  val callbacks = crawlConfig.callbacks
+  
   val maxDepth = crawlConfig.maxDepth
   // Master list of urls currently being processed.
   val currentlyProcessing = scala.collection.mutable.Set[String]()
@@ -48,6 +51,7 @@ class Processor(val crawlConfig: CrawlConfig) extends Actor with Filters {
     case DoneUrl(startingUrl, finalDocument) =>
       urlsProcessed += startingUrl
       currentlyProcessing -= startingUrl
+      callbacks ! ProcessedUrl(startingUrl)
       handleDoneUrl(finalDocument)
   }
 

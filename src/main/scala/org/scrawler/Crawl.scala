@@ -3,6 +3,7 @@ import akka.actor.Actor.actorOf
 import akka.util.duration._
 import scala.util.matching.Regex
 import akka.dispatch._
+import akka.actor.PoisonPill
 
 /*
  * TODO: Use CrawlConfig (and merge in hosts if they call Crawl.site/ Craw.host)
@@ -33,10 +34,14 @@ class Crawl(url: String, crawlConfig: CrawlConfig) {
   def start(): Future[List[String]] = {
     val future = processor.?(StartCrawl(url))(timeout = 300 seconds)
     future.onComplete { _ =>
+
+      if (crawlConfig.callbacks.actorClass == classOf[DefaultCallbacks])
+        crawlConfig.callbacks ! PoisonPill
+
       processor.stop
       Logger.shutdownLogger
     }
-    
+
     future.mapTo[List[String]]
   }
 }
