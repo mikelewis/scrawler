@@ -15,7 +15,7 @@ import java.net.URI
 
 class Processor(val crawlConfig: CrawlConfig) extends Actor with Filters {
   self.faultHandler = OneForOneStrategy(List(classOf[Throwable]), 5, 5000)
-
+  val hooks = crawlConfig.hooks
   val maxDepth = crawlConfig.maxDepth
   // Master list of urls currently being processed.
   val currentlyProcessing = scala.collection.mutable.Set[String]()
@@ -124,9 +124,10 @@ class Processor(val crawlConfig: CrawlConfig) extends Actor with Filters {
     val urlObj: URI = UrlUtils.createURI(url).get
 
     // also make sure it's on the same host etc etc.
+
     !urlsProcessed(url) &&
       validHost(UrlUtils.getHost(urlObj)) &&
-      !invalidUrl(url)
+      hooks.canVisitUrl(url)
   }
 
   def emptyQueue = {

@@ -6,6 +6,6 @@ import com.ning.http.client.AsyncHttpClientConfig.Builder
 case class CrawlConfig(
   maxDepth: Int = -1,
   hosts: Traversable[Regex] = Seq(),
-  ignoreLinks: Traversable[Regex] = Seq(),
   numberOfUrlWorkers: Int = 10,
-  httpClientConfig: AsyncHttpClientConfig = GeneralUtils.defaultAsyncHttpConfig) {}
+  httpClientConfig: AsyncHttpClientConfig = GeneralUtils.defaultAsyncHttpConfig,
+  hooks: Hooks = DefaultHooks) {}

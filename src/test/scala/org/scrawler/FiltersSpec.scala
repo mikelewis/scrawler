@@ -25,15 +25,6 @@ class FiltersSpec extends Specification {
       sample.crawlConfig = CrawlConfig(hosts = Seq("""awesome.com""".r))
       sample.validHost("awesome.com") must beTrue
     }
-
-    "invalid url should return false if url seq is empty" in new before {
-      sample.invalidUrl("http://somethingawesome.com/hey") must beFalse
-    }
-
-    "invalid url should return true if matches" in new before {
-      sample.crawlConfig = CrawlConfig(ignoreLinks = Seq("""moonscript""".r))
-      sample.invalidUrl("http://somethingawesome.com/moonscript") must beFalse
-    }
   }
 
 }

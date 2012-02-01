@@ -22,6 +22,7 @@ import collection.JavaConversions._
 
 class UrlWorker(crawlConfig: CrawlConfig) extends Actor {
   val client = new AsyncHttpClient(crawlConfig.httpClientConfig)
+  val hooks = crawlConfig.hooks
 
   override def postStop {
     client.close
@@ -36,7 +37,7 @@ class UrlWorker(crawlConfig: CrawlConfig) extends Actor {
     val jsoupDocument = try {
       fetchHtml(url)
     } catch {
-      case e: Exception => new Right(SystemError(url ,e))
+      case e: Exception => new Right(SystemError(url, e))
     }
     val finalDoc = jsoupDocument.fold((doc => doc), (failedDocument => failedDocument))
     DoneUrl(url, finalDoc)
@@ -50,9 +51,9 @@ class UrlWorker(crawlConfig: CrawlConfig) extends Actor {
       Left(new ParsedDocument(response, doc))
     } catch {
       case x => {
-    	  x.getCause() match {
-    	    case e : java.net.ConnectException => Right(ConnectionError(urlStr, e))
-    	  }
+        x.getCause() match {
+          case e: java.net.ConnectException => Right(ConnectionError(urlStr, e))
+        }
       }
     }
   }
@@ -74,8 +75,12 @@ class UrlWorker(crawlConfig: CrawlConfig) extends Actor {
       def onStatusReceived(responseStatus: HttpResponseStatus) = {
         Logger.info(this, "Status: %s".format(responseStatus.getStatusCode()))
         builder.accumulate(responseStatus)
-        STATE.CONTINUE
+        if (hooks.canContinueFromStatusCode(responseStatus.getUrl().toString(), responseStatus.getStatusCode()))
+          STATE.CONTINUE
+        else
+          STATE.ABORT
       }
+      
       def onHeadersReceived(headers: HttpResponseHeaders) = {
         builder.accumulate(headers)
         STATE.CONTINUE

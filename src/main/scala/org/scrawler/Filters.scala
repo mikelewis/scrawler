@@ -9,10 +9,6 @@ trait Filters {
     crawlConfig.hosts.isEmpty || GeneralUtils.genericRegexMatch(crawlConfig.hosts, host)
   }
   
-  def invalidUrl(url : String) = {
-	!crawlConfig.hosts.isEmpty && GeneralUtils.genericRegexMatch(crawlConfig.ignoreLinks, url)
-  }
-  
   // TODOD DO
   def validScheme(scheme : String) = {
     true
