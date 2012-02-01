@@ -2,6 +2,7 @@ package org.scrawler
 import akka.actor.Actor.actorOf
 import akka.util.duration._
 import scala.util.matching.Regex
+import akka.dispatch._
 
 /*
  * TODO: Use CrawlConfig (and merge in hosts if they call Crawl.site/ Craw.host)
@@ -28,16 +29,14 @@ object Crawl {
 class Crawl(url: String, crawlConfig: CrawlConfig) {
   val processor = actorOf(new Processor(crawlConfig)).start()
 
-  def start(): List[String] = {
+  // List of strings will probably change
+  def start(): Future[List[String]] = {
     val future = processor.?(StartCrawl(url))(timeout = 300 seconds)
-
-    future.get match {
-      case urls: List[String] => println("Finished! Got " + urls.size + " urls\n\n\n\n\n" + urls)
-      case _ => println("Something went wrong")
+    future.onComplete { _ =>
+      processor.stop
+      Logger.shutdownLogger
     }
-
-    processor.stop
-    Logger.shutdownLogger
-    List("saf")
+    
+    future.mapTo[List[String]]
   }
 }
