@@ -5,10 +5,7 @@ import scala.util.matching.Regex
 import akka.dispatch._
 import akka.actor.PoisonPill
 
-/*
- * TODO: Use CrawlConfig (and merge in hosts if they call Crawl.site/ Craw.host)
- * merge being passedInConfig.copy(hosts = ...)
- */
+
 object Crawl {
   def apply(url: String, crawlConfig: CrawlConfig = CrawlConfig()) = {
     (new Crawl(url, crawlConfig)).start()
