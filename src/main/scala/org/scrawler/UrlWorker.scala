@@ -68,22 +68,28 @@ class UrlWorker(crawlConfig: CrawlConfig) extends Actor {
       }
 
       def onBodyPartReceived(bodyPart: HttpResponseBodyPart) = {
-        builder.accumulate(bodyPart)
-        STATE.CONTINUE
-      }
-
-      def onStatusReceived(responseStatus: HttpResponseStatus) = {
-        Logger.info(this, "Status: %s".format(responseStatus.getStatusCode()))
-        builder.accumulate(responseStatus)
-        if (hooks.canContinueFromStatusCode(responseStatus.getUrl().toString(), responseStatus.getStatusCode()))
+        val newBuilder = builder.accumulate(bodyPart)
+        if (hooks.canContinueFromBodyPartReceived(newBuilder.build, bodyPart))
           STATE.CONTINUE
         else
           STATE.ABORT
       }
-      
+
+      def onStatusReceived(responseStatus: HttpResponseStatus) = {
+        val newBuilder = builder.accumulate(responseStatus)
+        if (hooks.canContinueFromStatusCode(newBuilder.build, responseStatus.getStatusCode()))
+          STATE.CONTINUE
+        else
+          STATE.ABORT
+      }
+
       def onHeadersReceived(headers: HttpResponseHeaders) = {
-        builder.accumulate(headers)
-        STATE.CONTINUE
+        val newBuilder = builder.accumulate(headers)
+
+        if (hooks.canContinueFromHeaders(newBuilder.build, headers))
+          STATE.CONTINUE
+        else
+          STATE.ABORT
       }
 
       def onCompleted() = {
