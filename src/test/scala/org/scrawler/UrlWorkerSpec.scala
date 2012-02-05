@@ -54,6 +54,47 @@ class UrlWorkerSpec extends Specification {
     def actor = actorRef.underlyingActor
   }
 
+  "processUrl" should {
+    "return DoneUrl on success" in new BaseBefore {
+      actor.processUrl("http://localhost:8910/basic.html") match {
+        case x: DoneUrl => ok
+        case _ => ko
+      }
+    }
+
+    "return DoneUrl on failure" in new BaseBefore {
+      actor.processUrl("http://locasdflhost:8910/basic.html") match {
+        case x: DoneUrl => ok
+        case _ => ko
+      }
+    }
+
+    "return DoneUrl which has url and FinalDocument" in new BaseBefore {
+      actor.processUrl("http://localhost:8910/basic.html") match {
+        case DoneUrl(url, doc) => {
+          url must beEqualTo("http://localhost:8910/basic.html")
+          doc must beAnInstanceOf[FinalDocument]
+        }
+        case _ => ko
+      }
+    }
+
+    "return DoneUrl which has ParsedDocument for success" in new BaseBefore {
+      val url, doc = actor.processUrl("http://localhost:8910/basic.html") match {
+        case DoneUrl(url, doc) => doc must beAnInstanceOf[ParsedDocument]
+        case _ => ko
+      }
+    }
+
+    "return DoneUrl which has FailedDocument for failure" in new BaseBefore {
+      actor.processUrl("http://localhost:89100/basic.html") match {
+        case DoneUrl(url, doc) => doc must beAnInstanceOf[FailedDocument]
+        case _ => ko
+      }
+
+    }
+  }
+
   "fetchHtml" should {
     "return FailedDocument on invalid url" in new BaseBefore {
       actor.fetchHtml("http://somethingthatdoesnotexistriteguyz.com") must beRight.like {
@@ -67,10 +108,10 @@ class UrlWorkerSpec extends Specification {
         case x: ParsedDocument => ok
         case _ => ko
       }
-      
+
       "return Left(ParsedDocument) for a non-200 response" in new BaseBefore {
         actor.fetchHtml("http://localhost:8910/404.html") must beLeft.like {
-          case x : ParsedDocument => x.statusCode must beEqualTo(404)
+          case x: ParsedDocument => x.statusCode must beEqualTo(404)
           case _ => ko
         }
       }
