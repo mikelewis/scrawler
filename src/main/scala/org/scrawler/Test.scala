@@ -11,7 +11,7 @@ class SampleCallbacks extends Callbacks {
 }
 
 object SampleHooks extends Hooks {
-  override def canContinueFromBodyPartReceived(response : Response, bodyPart : HttpResponseBodyPart) = {
+  override def canContinueFromBodyPartReceived(response: Response, bodyPart: HttpResponseBodyPart) = {
     Logger.info(SampleHooks, "Size of " + response.getUri().toString + " is " + response.getResponseBody.length)
     response.getResponseBody().length < 10000
   }

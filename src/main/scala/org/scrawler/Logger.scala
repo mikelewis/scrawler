@@ -15,7 +15,7 @@ class LoggerActor extends Actor {
     case Error(from, str) => message("ERROR", from, str)
   }
 
-  private def message(typeOfMessage: String, from : Any, str: String) {
+  private def message(typeOfMessage: String, from: Any, str: String) {
     val finalStr = "%s\t[%s] [%s] - %s".
       format(typeOfMessage, (new java.util.Date), from, str)
 
@@ -30,15 +30,15 @@ object Logger {
     actorOf[LoggerActor].start()
   }
 
-  def info(from : Any, str: String) {
+  def info(from: Any, str: String) {
     sendMessage(Info(from, str))
   }
 
-  def warn(from : Any, str: String) {
+  def warn(from: Any, str: String) {
     sendMessage(Warn(from, str))
   }
 
-  def error(from : Any, str: String) {
+  def error(from: Any, str: String) {
     sendMessage(Error(from, str))
   }
 

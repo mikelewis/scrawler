@@ -43,7 +43,6 @@ class GeneralUtilsSpec extends Specification {
       mapHeader("test") must beEqualTo("value")
       mapHeader("test2") must beEqualTo("value1")
       mapHeader("test3") must beEqualTo("value1,value2")
-      
 
     }
   }

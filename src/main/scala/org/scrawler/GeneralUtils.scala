@@ -5,7 +5,6 @@ import scala.util.matching.Regex
 import com.ning.http.client.Response
 import collection.JavaConversions._
 
-
 object GeneralUtils {
   def defaultAsyncHttpConfig = {
     val builder = new AsyncHttpClientConfig.Builder()

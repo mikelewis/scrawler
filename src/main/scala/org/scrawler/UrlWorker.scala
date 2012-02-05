@@ -46,7 +46,7 @@ class UrlWorker(crawlConfig: CrawlConfig) extends Actor {
   def fetchHtml(urlStr: String): Either[ParsedDocument, FailedDocument] = {
     try {
       val response = client.prepareGet(urlStr).execute(generateHttpHandler).get()
-      
+
       if (!response.hasResponseHeaders())
         return Right(AbortedDocumentDuringStatus(response.getUri.toString))
       if (!response.hasResponseBody)

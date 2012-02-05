@@ -14,7 +14,7 @@ object TestServer extends HServer with App {
     def resolve(req: HReqData) = Some(homeLet) // the only handler 
   
     object homeLet extends let.FsLet {
-      protected def dirRoot= "sample_files"
+      protected def dirRoot = "sample_files"
       
       override protected def uriRoot = ""   // i.e. localhost:8910/
       override protected def allowLs = true // show directory listing
