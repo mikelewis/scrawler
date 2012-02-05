@@ -5,14 +5,15 @@ import com.ning.http.client.Response
 import scala.collection.JavaConversions._
 
 class ParsedDocument(val response: Response, val doc: Document) extends FinalDocument {
-  // TDODO I'd rather find all these links in one pass...
-  val links = doc.select("a[href]").map(_.attr("abs:href"))
-  val iframeSrc = doc.select("frame[src]").map(_.attr("abs:src"))
-  val linkHref = doc.select("link[href]").map(_.attr("abs:href"))
-  val scriptSrc = doc.select("script[src]").map(_.attr("abs:src"))
-
-  def urls: List[String] = {
-    (links ++ iframeSrc ++ linkHref ++ scriptSrc).toList
+  val urls = doc.select("a[href],frame[src],link[href],script[src]").foldLeft(List.empty[String]){(list, e) =>
+    val url = e.tagName() match {
+      case "a" | "link" => e.attr("abs:href")
+      case "frame" | "script" => e.attr("abs:src")
+    }
+    url :: list
   }
-
+  
+  val statusCode = response.getStatusCode
+  val headers = GeneralUtils.getHeadersFromResponse(response)
+  val body = response.getResponseBody
 }

@@ -43,10 +43,15 @@ class UrlWorker(crawlConfig: CrawlConfig) extends Actor {
     DoneUrl(url, finalDoc)
   }
 
-  // TODO - Based on response, return Right(FailedDocument)
   def fetchHtml(urlStr: String): Either[ParsedDocument, FailedDocument] = {
     try {
       val response = client.prepareGet(urlStr).execute(generateHttpHandler).get()
+      
+      if (!response.hasResponseHeaders())
+        return Right(AbortedDocumentDuringStatus(response.getUri.toString))
+      if (!response.hasResponseBody)
+        return Right(AbortedDocumentDuringHeaders(response.getUri.toString))
+
       val doc = Jsoup.parse(response.getResponseBodyAsStream(), null, response.getUri.toString())
       Left(new ParsedDocument(response, doc))
     } catch {
@@ -85,8 +90,8 @@ class UrlWorker(crawlConfig: CrawlConfig) extends Actor {
 
       def onHeadersReceived(headers: HttpResponseHeaders) = {
         val newBuilder = builder.accumulate(headers)
-
-        if (hooks.canContinueFromHeaders(newBuilder.build, headers))
+        val resp = newBuilder.build
+        if (hooks.canContinueFromHeaders(resp, GeneralUtils.getHeadersFromResponse(resp)))
           STATE.CONTINUE
         else
           STATE.ABORT

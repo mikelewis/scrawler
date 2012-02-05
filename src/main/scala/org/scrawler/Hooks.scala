@@ -10,14 +10,14 @@ class Hooks {
     true
   }
 
-  def canContinueFromHeaders(response: Response, headers: HttpResponseHeaders) = {
+  def canContinueFromHeaders(response: Response, headers: Map[String, String]) = {
     true
   }
 
   def canContinueFromStatusCode(response: Response, status: Integer) = {
     true
   }
-  
+
   def canContinueFromBodyPartReceived(response: Response, bodyPart: HttpResponseBodyPart) = {
     true
   }

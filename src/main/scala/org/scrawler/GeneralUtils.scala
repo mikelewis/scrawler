@@ -2,6 +2,8 @@ package org.scrawler
 import com.ning.http.client.AsyncHttpClientConfig
 import com.ning.http.client.AsyncHttpClientConfig.Builder
 import scala.util.matching.Regex
+import com.ning.http.client.Response
+import collection.JavaConversions._
 
 
 object GeneralUtils {
@@ -14,11 +16,17 @@ object GeneralUtils {
       .setFollowRedirects(true)
       .build()
   }
-  
-  
-  def genericRegexMatch(regexes : Traversable[Regex], str : String) = {
-    regexes.exists {regex => 
-    	regex.findFirstIn(str).isDefined
+
+  def getHeadersFromResponse(response: Response): Map[String, String] = {
+    val headers = response.getHeaders()
+    headers.keySet.foldLeft(Map.empty[String, String]) { (acum, header) =>
+      acum + (header -> headers.getJoinedValue(header, ","))
+    }
+  }
+
+  def genericRegexMatch(regexes: Traversable[Regex], str: String) = {
+    regexes.exists { regex =>
+      regex.findFirstIn(str).isDefined
     }
   }
 }
