@@ -40,9 +40,7 @@ class GeneralUtilsSpec extends Specification {
       parsedDoc.response.getHeaders.put("test3", List("value1", "value2"))
       val mapHeader = GeneralUtils.getHeadersFromResponse(parsedDoc.response)
       mapHeader.size must beEqualTo(3)
-      mapHeader("test") must beEqualTo("value")
-      mapHeader("test2") must beEqualTo("value1")
-      mapHeader("test3") must beEqualTo("value1,value2")
+      mapHeader must havePairs("test"->"value", "test2" -> "value1", "test3" -> "value1,value2")
 
     }
   }
