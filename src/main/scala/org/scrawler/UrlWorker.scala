@@ -46,12 +46,11 @@ class UrlWorker(crawlConfig: CrawlConfig) extends Actor {
   def fetchHtml(urlStr: String): Either[ParsedDocument, FailedDocument] = {
     try {
       val response = client.prepareGet(urlStr).execute(generateHttpHandler).get()
-
       if (!response.hasResponseHeaders())
         return Right(AbortedDocumentDuringStatus(response.getUri.toString))
       if (!response.hasResponseBody)
         return Right(AbortedDocumentDuringHeaders(response.getUri.toString))
-
+        
       val doc = Jsoup.parse(response.getResponseBodyAsStream(), null, response.getUri.toString())
       Left(new ParsedDocument(response, doc))
     } catch {
