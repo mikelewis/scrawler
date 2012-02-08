@@ -56,7 +56,9 @@ class UrlWorker(crawlConfig: CrawlConfig) extends Actor {
     } catch {
       case x => {
         x.getCause() match {
-          case e: java.net.ConnectException => Right(ConnectionError(urlStr, e))
+          case ce: java.net.ConnectException => Right(ConnectionError(urlStr, ce))
+          case mu: java.net.MalformedURLException => Right(MalformedUrl(urlStr, mu))
+          case somethingElse => throw somethingElse
         }
       }
     }

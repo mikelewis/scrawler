@@ -22,6 +22,4 @@ object TestServer extends HServer with App {
       override protected def bufSize = TestServer.bufferSize
     }
   }
-  
-  start
 }

@@ -1,32 +1,28 @@
 package org.scrawler
-import org.specs2.mutable._
 import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
-import org.specs2.specification.{ Before, After, Step, Around }
-import org.specs2.specification.Scope
+import org.scalatest.junit.JUnitRunner
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.BeforeAndAfter
 
 @RunWith(classOf[JUnitRunner])
-class FiltersSpec extends Specification {
-
-  trait before extends Scope {
-    class SampleClassWithFilter extends Filters {
-      var crawlConfig = CrawlConfig()
-    }
-
-    val sample = new SampleClassWithFilter
+class FiltersSpec extends MasterSuite with BeforeAndAfter {
+  class SampleClassWithFilter extends Filters {
+    var crawlConfig = CrawlConfig()
+  }
+  var sample = new SampleClassWithFilter
+  
+  before {
+    sample = new SampleClassWithFilter
   }
 
-  "Filters" should {
-    "valid hosts should return true if hosts array is empty" in new before {
-      sample.validHost("something.com") must beTrue
+  describe("validHosts") {
+    it("should return true if hosts array is empty") {
+      sample.validHost("something.com") should be(true)
     }
 
-    "valid hosts should return true if host exist in regex array" in new before {
+    it("should return true if host exist in regex array") {
       sample.crawlConfig = CrawlConfig(hosts = Seq("""awesome.com""".r))
-      sample.validHost("awesome.com") must beTrue
+      sample.validHost("awesome.com") should be(true)
     }
   }
-
 }
-
- 

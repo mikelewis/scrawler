@@ -1,43 +1,41 @@
 package org.scrawler
-import org.specs2.mutable._
 import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
+import org.scalatest.junit.JUnitRunner
 import java.net.URI
 
 @RunWith(classOf[JUnitRunner])
-class UrlUtilsSpec extends Specification {
-  "isValidUrl" should {
-    "return true for a valid url" in {
-      UrlUtils.isValidUrl("http://yahoo.com") must beTrue
+class UrlUtilsSpec extends MasterSuite {
+  describe("isValidUrl") {
+    it("should return true for a valid url") {
+      UrlUtils.isValidUrl("http://yahoo.com") should be(true)
     }
 
-    "return false for an invalid url" in {
-      UrlUtils.isValidUrl("nohttp.com") must beFalse
+    it("should return false for an invalid url") {
+      UrlUtils.isValidUrl("nohttp.com") should be(false)
     }
   }
 
-  "getHost" should {
-    "return host for a valid uri" in {
+  describe("getHost") {
+    it("should return host for a valid uri") {
       val uri = new URI("http://google.com")
-      UrlUtils.getHost(uri) must beEqualTo("google.com")
+      UrlUtils.getHost(uri) should be("google.com")
     }
   }
 
-  "sanitizeUrl" should {
-    "must strip fragments" in {
+  describe("sanitizeUrl") {
+    it("should strip fragments") {
       val uri = new URI("http://google.com#hi")
-      UrlUtils.sanitizeUrl(uri).toString() must beEqualTo("http://google.com")
-      
+      UrlUtils.sanitizeUrl(uri).toString() should be("http://google.com")
     }
   }
 
-  "createURI" should {
-    "returns uri for valid uri" in {
-      UrlUtils.createURI("http://google.com") must beSome
+  describe("createURI") {
+    it("Returns uri for valid uri") {
+      UrlUtils.createURI("http://google.com") should be(Some(URI.create("http://google.com/")))
     }
-    
-    "returns none for invalid uri" in {
-      UrlUtils.createURI("google.com") must beNone
+
+    it("returns none for invalid uri") {
+      UrlUtils.createURI("google.com") should be(None)
     }
   }
 }
