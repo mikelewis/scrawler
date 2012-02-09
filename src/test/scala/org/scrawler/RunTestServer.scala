@@ -28,4 +28,12 @@ class RunTestServer extends MasterSuite with BeforeAndAfterAll {
   def getUrl(path: String) = {
     actualBaseUrl + ":" + actualPort + "/" + path
   }
+  
+  def relativeToAbsolute(paths: List[String]) = {
+    paths.map(path => getUrl(path))
+  }
+  
+  def relativeToAbsolute(str: String*): List[String] = {
+    relativeToAbsolute(str.toList)
+  }
 }
