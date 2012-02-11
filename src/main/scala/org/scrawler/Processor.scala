@@ -18,8 +18,11 @@ class Processor(val crawlConfig: CrawlConfig) extends Actor with Filters {
 
   val hooks = crawlConfig.hooks
   val callbacks = crawlConfig.callbacks
-
   val maxDepth = crawlConfig.maxDepth
+  val maxUrls = crawlConfig.maxUrls
+
+  var totalUrlsProcessed = 0
+  var finished = false
   // Master list of urls currently being processed.
   val currentlyProcessing = scala.collection.mutable.Set[String]()
   // Urls that are queued for the next depth
@@ -43,16 +46,18 @@ class Processor(val crawlConfig: CrawlConfig) extends Actor with Filters {
   }
 
   def receive = {
-    case StartCrawl(url) =>
+    case StartCrawl(url) if !finished =>
       enqueueNewUrls(List(url))
       originalRequestor = self.channel
       processQueuedUrlsOrFinish
 
-    case DoneUrl(startingUrl, finalDocument) =>
+    case DoneUrl(startingUrl, finalDocument) if !finished =>
       urlsProcessed += startingUrl
       currentlyProcessing -= startingUrl
+      totalUrlsProcessed += 1
       callbacks ! ProcessedUrl(startingUrl)
       handleDoneUrl(finalDocument)
+    case _ =>
   }
 
   def handleDoneUrl(finalDocument: FinalDocument) {
@@ -72,8 +77,13 @@ class Processor(val crawlConfig: CrawlConfig) extends Actor with Filters {
     if (!isFinished) {
       processQueuedUrls
     } else {
-      originalRequestor ! urlsProcessed.toList
+      finishProcessing
     }
+  }
+
+  def finishProcessing {
+    originalRequestor ! urlsProcessed.toList
+    finished = true
   }
 
   def handleParsedDocument(parsedDocument: ParsedDocument) {
@@ -91,7 +101,7 @@ class Processor(val crawlConfig: CrawlConfig) extends Actor with Filters {
   }
 
   def isFinished: Boolean = {
-    queuedUrls.size == 0 || depthsProcessed == maxDepth
+    queuedUrls.size == 0 || depthsProcessed == maxDepth || totalUrlsProcessed == maxUrls
   }
 
   def finishedWithCurrentDepth: Boolean = {

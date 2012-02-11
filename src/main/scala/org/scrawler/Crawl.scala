@@ -27,7 +27,6 @@ object Crawl {
 class Crawl(url: String, crawlConfig: CrawlConfig) {
   val processor = actorOf(new Processor(crawlConfig)).start()
 
-  // List of strings will probably change
   def start(): Future[List[String]] = {
     val future = processor.?(StartCrawl(url))(timeout = 300 seconds)
     future.onComplete { _ =>
