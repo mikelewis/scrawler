@@ -55,12 +55,5 @@ class ProcessorActorSpec extends RunTestServer with BeforeAndAfterEach {
       val result = actor ? StartCrawl(getUrl("1.html"))
       result.get.asInstanceOf[List[String]].toSet should be(relativeToAbsolute("4.html", "5.html", "6.html", "7.html", "2.html", "3.html", "1.html").toSet)
     }
-
-    it("should abide by max urls") {
-      setActor(CrawlConfig(maxUrls = 3, maxDepth = 2))
-      actor.start()
-      val result = actor ? StartCrawl(getUrl("1.html"))
-      result.get.asInstanceOf[List[String]].toSet should be(relativeToAbsolute("2.html", "3.html", "1.html").toSet)
-    }
   }
 }

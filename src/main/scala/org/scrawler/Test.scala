@@ -20,7 +20,7 @@ object SampleHooks extends Hooks {
 object Test extends App {
   //Crawl("http://leafo.net/", CrawlConfig(maxDepth = 1))
   val callbackActor = actorOf[SampleCallbacks].start()
-  val future = Crawl.site("http://leafo.net/lessphp/docs/index.html", CrawlConfig(maxDepth = 0, callbacks = callbackActor, hooks = SampleHooks))
+  val future = Crawl.site("http://leafo.net/lessphp/docs/index.html", CrawlConfig(maxDepth = 2, callbacks = callbackActor, hooks = SampleHooks))
   future.get
   callbackActor ! PoisonPill
   println("DONE!")
