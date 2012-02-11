@@ -8,6 +8,7 @@ import akka.actor.ActorRef
 case class CrawlConfig(
   maxDepth: Int = scala.Int.MaxValue,
   hosts: Traversable[Regex] = Seq(),
+  timeout: Int = 60,
   numberOfUrlWorkers: Int = 10,
   httpClientConfig: AsyncHttpClientConfig = GeneralUtils.defaultAsyncHttpConfig,
   hooks: Hooks = DefaultHooks,

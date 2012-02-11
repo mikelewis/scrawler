@@ -5,7 +5,6 @@ import scala.util.matching.Regex
 import akka.dispatch._
 import akka.actor.PoisonPill
 
-
 object Crawl {
   def apply(url: String, crawlConfig: CrawlConfig = CrawlConfig()) = {
     (new Crawl(url, crawlConfig)).start()
@@ -25,17 +24,21 @@ object Crawl {
 }
 
 class Crawl(url: String, crawlConfig: CrawlConfig) {
+
   val processor = actorOf(new Processor(crawlConfig)).start()
 
+  def shutdownCrawler {
+    if (crawlConfig.callbacks.actorClass == classOf[DefaultCallbacks])
+      crawlConfig.callbacks ! PoisonPill
+
+    processor.stop
+    Logger.shutdownLogger
+  }
+  
   def start(): Future[List[String]] = {
-    val future = processor.?(StartCrawl(url))(timeout = 300 seconds)
+    val future = processor.?(StartCrawl(url))(timeout = crawlConfig.timeout seconds)
     future.onComplete { _ =>
-
-      if (crawlConfig.callbacks.actorClass == classOf[DefaultCallbacks])
-        crawlConfig.callbacks ! PoisonPill
-
-      processor.stop
-      Logger.shutdownLogger
+      shutdownCrawler
     }
 
     future.mapTo[List[String]]
