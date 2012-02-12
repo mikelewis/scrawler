@@ -34,13 +34,43 @@ class Crawl(url: String, crawlConfig: CrawlConfig) {
     processor.stop
     Logger.shutdownLogger
   }
-  
-  def start(): Future[List[String]] = {
-    val future = processor.?(StartCrawl(url))(timeout = crawlConfig.timeout seconds)
-    future.onComplete { _ =>
-      shutdownCrawler
-    }
 
-    future.mapTo[List[String]]
+  def start() = {
+    var resultFuture = processor.?(StartCrawl(url))(timeout = crawlConfig.timeout seconds)
+
+    // My god this is messy, but I couldn't find a way to make it more idiomatic :/
+    val value =
+      try {
+        try {
+          resultFuture.get
+        } catch {
+          case ex => {
+            try {
+              processor.?(StopCrawl)(timeout = 10 seconds).get
+            } catch {
+              case _ => Logger.error(Crawl, "Tried to gracefully shutdown, but failed."); List[String]()
+            }
+          }
+        }
+      } finally {
+        shutdownCrawler
+      }
+
+    value
+
+    // resultFuture.onComplete { _ =>
+    //  shutdownCrawler
+    // }
+
+    /* resultFuture.onTimeout { _ =>
+      println("TIMED OUT FUCKKK")
+      resultFuture = processor.?(StopCrawl)(timeout = 60 seconds)
+      resultFuture.onComplete { _ =>
+        println("COMPLETE FROM TIMEOUT")
+      	shutdownCrawler
+      }
+    }*/
+
+    //resultFuture.mapTo[List[String]]
   }
 }

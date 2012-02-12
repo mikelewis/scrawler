@@ -1,8 +1,10 @@
 package org.scrawler
 import akka.actor.Actor.actorOf
 import akka.actor.PoisonPill
+import akka.util.duration._
 import com.ning.http.client.Response
 import com.ning.http.client.HttpResponseBodyPart
+import akka.dispatch.Future
 
 class SampleCallbacks extends Callbacks {
   override def proccessedUrl(url: String) {
@@ -18,10 +20,28 @@ object SampleHooks extends Hooks {
 }
 
 object Test extends App {
-  //Crawl("http://leafo.net/", CrawlConfig(maxDepth = 1))
   val callbackActor = actorOf[SampleCallbacks].start()
-  val future = Crawl.site("http://leafo.net/lessphp/docs/index.html", CrawlConfig(maxDepth = 2, callbacks = callbackActor, hooks = SampleHooks))
-  future.get
+  val urls = Crawl.site("http://leafo.net", CrawlConfig(callbacks = callbackActor, hooks = SampleHooks))
+  println("GOT URLS! " + urls)
+  
+  val jurls = Crawl.site("http://jouhanallende.com", CrawlConfig(callbacks = callbackActor, hooks = SampleHooks))
+  println("GOT URLS! " + jurls)
+
+  //  val leafFuture = Future {
+  //    Crawl.site("http://leafo.net", CrawlConfig(maxDepth = 4, callbacks = callbackActor, hooks = SampleHooks))
+  //  }
+  //  
+  //  val jouhanFuture = Future {
+  //     Crawl.site("http://jouhanallende.com", CrawlConfig(maxDepth = 3, callbacks = callbackActor, hooks = SampleHooks))
+  //  }
+  //  
+  //  val urls = for {
+  //    a <- leafFuture.mapTo[List[String]].await(20 second)
+  //    b <- jouhanFuture.mapTo[List[String]].await(20 second)
+  //  } yield a ++ b
+  //  
+  //  
+  //  println("Got urls!" + urls.await(20 second))
   callbackActor ! PoisonPill
   println("DONE!")
 }

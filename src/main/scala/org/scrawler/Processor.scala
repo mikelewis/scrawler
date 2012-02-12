@@ -51,11 +51,11 @@ class Processor(val crawlConfig: CrawlConfig) extends Actor with Filters {
 
     case DoneUrl(startingUrl, finalDocument) =>
       currentlyProcessing -= startingUrl
-      if (!gracefulShutdown) {
-        urlsProcessed += startingUrl
-        callbacks ! ProcessedUrl(startingUrl)
-      }
+      urlsProcessed += startingUrl
+      callbacks ! ProcessedUrl(startingUrl)
       handleDoneUrl(finalDocument)
+
+    case StopCrawl => originalRequestor = self.channel; startGracefulShutdown
     case _ =>
   }
 
@@ -64,7 +64,6 @@ class Processor(val crawlConfig: CrawlConfig) extends Actor with Filters {
       case parsedDoc: ParsedDocument => handleParsedDocument(parsedDoc)
       case failedDoc: FailedDocument => handleFailedDocument(failedDoc)
     }
-
 
     if (finishedWithCurrentDepth) {
       depthsProcessed += 1
@@ -81,14 +80,21 @@ class Processor(val crawlConfig: CrawlConfig) extends Actor with Filters {
     }
   }
 
+  def startGracefulShutdown {
+    println("I'm getting told to shutdown")
+    gracefulShutdown = true
+  }
+
   def finishProcessing {
+    println("I'm done processing, send result to parent")
     originalRequestor ! urlsProcessed.toList
   }
 
   def handleParsedDocument(parsedDocument: ParsedDocument) {
     println("Got " + parsedDocument.urls.size + " urls to process")
     println("Number to go " + currentlyProcessing.size)
-    enqueueNewUrls(parsedDocument.urls)
+    if (!gracefulShutdown)
+      enqueueNewUrls(parsedDocument.urls)
   }
 
   def handleFailedDocument(failedDocument: FailedDocument) {
@@ -116,8 +122,6 @@ class Processor(val crawlConfig: CrawlConfig) extends Actor with Filters {
   }
 
   def enqueueNewUrls(urls: List[String]) {
-    if (gracefulShutdown)
-      return
     urls.foreach { url =>
       validateAndSanitizeUrl(url).map { url =>
         if (!queuedUrls.contains(url) && visit(url)) {
