@@ -40,7 +40,9 @@ object UrlUtils {
 
   def createURI(url: String): Option[URI] = {
     try {
-      Some(AsyncHttpProviderUtils.createUri(url))
+      val uri = AsyncHttpProviderUtils.createUri(url)
+      if(uri.getHost == null || uri.getHost == "") return None
+      Some(uri)
     } catch {
       case e => None
     }

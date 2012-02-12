@@ -21,11 +21,9 @@ object SampleHooks extends Hooks {
 
 object Test extends App {
   val callbackActor = actorOf[SampleCallbacks].start()
-  val urls = Crawl.site("http://leafo.net", CrawlConfig(timeout=1, callbacks = callbackActor, hooks = SampleHooks))
+  val urls = Crawl.site("http://www.rubyflow.com/", CrawlConfig(maxDepth = 4, callbacks = callbackActor, hooks = SampleHooks))
   println("GOT URLS! " + urls)
-  
- val jurls = Crawl.site("http://jouhanallende.com", CrawlConfig(timeout=1, callbacks = callbackActor, hooks = SampleHooks))
- println("GOT URLS! " + jurls)
+
 
   //  val leafFuture = Future {
   //    Crawl.site("http://leafo.net", CrawlConfig(maxDepth = 4, callbacks = callbackActor, hooks = SampleHooks))

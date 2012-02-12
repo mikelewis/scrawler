@@ -81,12 +81,10 @@ class Processor(val crawlConfig: CrawlConfig) extends Actor with Filters {
   }
 
   def startGracefulShutdown {
-    println("I'm getting told to shutdown")
     gracefulShutdown = true
   }
 
   def finishProcessing {
-    println("I'm done processing, send result to parent")
     originalRequestor ! urlsProcessed.toList
   }
 

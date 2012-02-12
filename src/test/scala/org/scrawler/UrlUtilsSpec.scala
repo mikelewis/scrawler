@@ -124,5 +124,9 @@ class UrlUtilsSpec extends MasterSuite {
     it("returns none for invalid uri") {
       UrlUtils.createURI("google.com") should be(None)
     }
+
+    it("should return none for invalid host") {
+      UrlUtils.createURI("http://searchgasm_example.binarylogic.com") should be(None)
+    }
   }
 }
