@@ -48,7 +48,8 @@ object UrlUtils {
 
   def generateCanonicalQueryString(path: Option[String]): String = {
     path.map { p =>
-      val resultStringBuilder = p.split("&").foldLeft(TreeMap[String, String]()) { (map, pair) =>
+      val splitQuery = p.split("&")
+      val resultStringBuilder = splitQuery.foldLeft(TreeMap[String, String]()) { (map, pair) =>
         // decode tokens
         val tokens = pair.split("=", 2).map { v =>
           try {
@@ -70,8 +71,21 @@ object UrlUtils {
           queryString.appendAll(percentEncodeRfc3986(key)).appendAll("=").appendAll(percentEncodeRfc3986(value)).appendAll("&")
       }
 
-      (if (resultStringBuilder.endsWith("&")) resultStringBuilder.dropRight(1) else resultStringBuilder).mkString
+      finalizeStringBuilder(splitQuery, resultStringBuilder).mkString
     }.getOrElse("")
+  }
+
+  def finalizeStringBuilder(splitQuery: Array[String], str: StringBuilder) = {
+    var copyStr = str
+
+    copyStr = if (copyStr.endsWith("&"))
+      copyStr.dropRight(1)
+    else
+      copyStr
+    if (splitQuery.size == 1 && copyStr.endsWith("="))
+      copyStr.dropRight(1)
+    else
+      copyStr
   }
 
   // Thanks http://stackoverflow.com/questions/2993649/how-to-normalize-a-url-in-java

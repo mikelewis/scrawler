@@ -27,6 +27,10 @@ class UrlUtilsSpec extends MasterSuite {
       UrlUtils.generateCanonicalQueryString(None) should be("")
     }
 
+    it("should handle a key without a value") {
+      UrlUtils.generateCanonicalQueryString(Some("MA")) should be("MA")
+    }
+
     it("should return correct query string") {
       UrlUtils.generateCanonicalQueryString(Some("flag=true&name=mike")) should be("flag=true&name=mike")
     }
