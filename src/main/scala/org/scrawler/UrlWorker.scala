@@ -20,12 +20,10 @@ import org.jsoup.nodes.Document
 
 import collection.JavaConversions._
 
-class UrlWorker(crawlConfig: CrawlConfig) extends Actor {
-  val client = new AsyncHttpClient(crawlConfig.httpClientConfig)
+class UrlWorker(client: AsyncHttpClient, crawlConfig: CrawlConfig) extends Actor {
   val hooks = crawlConfig.hooks
 
   override def postStop {
-    client.close
   }
 
   def receive = {

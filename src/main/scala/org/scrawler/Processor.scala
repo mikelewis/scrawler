@@ -12,6 +12,7 @@ import akka.config.Supervision.OneForOneStrategy
 import akka.config.Supervision.Permanent
 import akka.dispatch.Dispatchers
 import java.net.URI
+import com.ning.http.client.AsyncHttpClient
 
 class Processor(val crawlConfig: CrawlConfig) extends Actor with Filters {
   self.faultHandler = OneForOneStrategy(List(classOf[Throwable]), 5, 5000)
@@ -30,8 +31,9 @@ class Processor(val crawlConfig: CrawlConfig) extends Actor with Filters {
   var depthsProcessed = -1 // Keep track of the depth as we are do a BFS(Breadth First Search)
   var originalRequestor: UntypedChannel = _ // Know where to send results back to
 
-  // Arbitrary number for now
-  val urlWorkers = Vector.fill(crawlConfig.numberOfUrlWorkers)(actorOf(new UrlWorker(crawlConfig)))
+  val httpClient = new AsyncHttpClient(crawlConfig.httpClientConfig)
+
+  val urlWorkers = Vector.fill(crawlConfig.numberOfUrlWorkers)(actorOf(new UrlWorker(httpClient, crawlConfig)))
   val workerRouter = Routing.loadBalancerActor(CyclicIterator(urlWorkers)).start()
 
   override def preStart = urlWorkers foreach { self.startLink(_) }
@@ -41,6 +43,8 @@ class Processor(val crawlConfig: CrawlConfig) extends Actor with Filters {
     workerRouter ! Broadcast(PoisonPill)
 
     workerRouter ! PoisonPill
+
+    httpClient.close
   }
 
   def receive = {

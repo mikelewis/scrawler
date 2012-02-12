@@ -5,6 +5,7 @@ import akka.util.duration._
 import com.ning.http.client.Response
 import com.ning.http.client.HttpResponseBodyPart
 import akka.dispatch.Future
+import java.util.Date
 
 class SampleCallbacks extends Callbacks {
   override def proccessedUrl(url: String) {
@@ -13,17 +14,14 @@ class SampleCallbacks extends Callbacks {
 }
 
 object SampleHooks extends Hooks {
-  override def canContinueFromBodyPartReceived(response: Response, bodyPart: HttpResponseBodyPart) = {
-    Logger.info(SampleHooks, "Size of " + response.getUri().toString + " is " + response.getResponseBody.length)
-    response.getResponseBody().length < 10000
-  }
 }
 
 object Test extends App {
   val callbackActor = actorOf[SampleCallbacks].start()
-  val urls = Crawl.site("http://www.rubyflow.com/", CrawlConfig(maxDepth = 4, callbacks = callbackActor, hooks = SampleHooks))
-  println("GOT URLS! " + urls)
+  val startTime = new Date
+  val urls = Crawl.site("http://leafo.net", CrawlConfig(callbacks = callbackActor, hooks = SampleHooks))
 
+  println("GOT URLS! " + urls)
 
   //  val leafFuture = Future {
   //    Crawl.site("http://leafo.net", CrawlConfig(maxDepth = 4, callbacks = callbackActor, hooks = SampleHooks))

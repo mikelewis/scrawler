@@ -41,7 +41,7 @@ object UrlUtils {
   def createURI(url: String): Option[URI] = {
     try {
       val uri = AsyncHttpProviderUtils.createUri(url)
-      if(uri.getHost == null || uri.getHost == "") return None
+      if (uri.getHost == null || uri.getHost == "") return None
       Some(uri)
     } catch {
       case e => None
