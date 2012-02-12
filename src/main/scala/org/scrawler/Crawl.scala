@@ -4,6 +4,7 @@ import akka.util.duration._
 import scala.util.matching.Regex
 import akka.dispatch._
 import akka.actor.PoisonPill
+import akka.dispatch.Promise
 
 object Crawl {
   def apply(url: String, crawlConfig: CrawlConfig = CrawlConfig()) = {
@@ -36,41 +37,19 @@ class Crawl(url: String, crawlConfig: CrawlConfig) {
   }
 
   def start() = {
-    var resultFuture = processor.?(StartCrawl(url))(timeout = crawlConfig.timeout seconds)
-
-    // My god this is messy, but I couldn't find a way to make it more idiomatic :/
-    val value =
-      try {
-        try {
-          resultFuture.get
-        } catch {
-          case ex => {
-            try {
-              processor.?(StopCrawl)(timeout = 10 seconds).get
-            } catch {
-              case _ => Logger.error(Crawl, "Tried to gracefully shutdown, but failed."); List[String]()
-            }
+    try {
+      val promise = Promise[List[String]](scala.Int.MaxValue)
+      promise completeWith {
+        processor.?(StartCrawl(url))(timeout = crawlConfig.timeout seconds).mapTo[List[String]].
+          onTimeout { _ =>
+            promise.completeWithResult(processor.?(StopCrawl)(timeout = 10 seconds).mapTo[List[String]].get)
           }
-        }
-      } finally {
-        shutdownCrawler
       }
 
-    value
+      promise.get
 
-    // resultFuture.onComplete { _ =>
-    //  shutdownCrawler
-    // }
-
-    /* resultFuture.onTimeout { _ =>
-      println("TIMED OUT FUCKKK")
-      resultFuture = processor.?(StopCrawl)(timeout = 60 seconds)
-      resultFuture.onComplete { _ =>
-        println("COMPLETE FROM TIMEOUT")
-      	shutdownCrawler
-      }
-    }*/
-
-    //resultFuture.mapTo[List[String]]
+    } finally {
+      shutdownCrawler
+    }
   }
 }
